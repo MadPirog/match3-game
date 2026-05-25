@@ -25,6 +25,15 @@
 .tile:active {
   transform: scale(0.95);
 }
+.tile.selected {
+  outline: 3px solid #00ff00;
+  outline-offset: -3px;
+}
+#game-container canvas {
+  cursor: pointer;
+  display: block;
+  margin: 0 auto;
+}
 .tile.matched {
   animation: pop 0.3s ease-out;
 }

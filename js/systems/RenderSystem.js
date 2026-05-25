@@ -1,3 +1,5 @@
+import { TILE_COLORS } from '../core/tiles.js';
+
 export class RenderSystem {
   constructor(board) {
     this.board = board;
@@ -53,15 +55,7 @@ export class RenderSystem {
         }
 
         // Set background color based on tile type (for now)
-        const colorMap = {
-          apple: '#ff0000',
-          banana: '#ffff00',
-          cherry: '#ff4500',
-          grape: '#800080',
-          orange: '#ffa500',
-          pineapple: '#ffd700'
-        };
-        tileEl.style.backgroundColor = colorMap[tile.type] || '#gray';
+        tileEl.style.backgroundColor = TILE_COLORS[tile.type] || '#808080';
 
         // Store coordinates for input handling
         tileEl.dataset.x = x;
@@ -86,6 +80,15 @@ export class RenderSystem {
    * @param {number} y
    * @param {boolean} highlight
    */
+  getTileFromEvent(e) {
+    const tileEl = e.target.closest('.tile');
+    if (!tileEl) return null;
+    return {
+      x: parseInt(tileEl.dataset.x, 10),
+      y: parseInt(tileEl.dataset.y, 10),
+    };
+  }
+
   highlightTile(x, y, highlight) {
     // Find the tile element at (x,y)
     const tiles = this.boardContainer.querySelectorAll('.tile');

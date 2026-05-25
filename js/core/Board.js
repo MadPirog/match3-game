@@ -1,3 +1,5 @@
+import { randomTileType } from './tiles.js';
+
 export class Board {
   constructor(width, height, gameState) {
     this.width = width;
@@ -14,26 +16,32 @@ export class Board {
     this.grid = Array.from({ length: this.height }, () =>
       Array.from({ length: this.width }, () => null)
     );
-    let hasMatch;
-    do {
-      this.fillRandom();
-      hasMatch = this.hasAnyMatch();
-      if (hasMatch) {
-        this.clearMatches(); // Clear any matches that occurred during fill
+    for (let y = 0; y < this.height; y++) {
+      for (let x = 0; x < this.width; x++) {
+        let type;
+        do {
+          type = randomTileType();
+        } while (
+          (x >= 2 &&
+            this.grid[y][x - 1]?.type === type &&
+            this.grid[y][x - 2]?.type === type) ||
+          (y >= 2 &&
+            this.grid[y - 1][x]?.type === type &&
+            this.grid[y - 2][x]?.type === type)
+        );
+        this.grid[y][x] = { type, x, y };
       }
-    } while (hasMatch);
+    }
   }
 
   /**
    * Fill the board with random tile types.
    */
   fillRandom() {
-    const types = ['apple', 'banana', 'cherry', 'grape', 'orange', 'pineapple']; // Example fruit types
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         if (!this.grid[y][x]) {
-          // For simplicity, we don't handle special tiles here yet.
-          this.grid[y][x] = { type: types[Math.floor(Math.random() * types.length)], x, y };
+          this.grid[y][x] = { type: randomTileType(), x, y };
         }
       }
     }
@@ -79,73 +87,32 @@ export class Board {
    */
   findMatches() {
     const matches = [];
-    const visited = new Set();
 
-    // Helper to check if a tile is part of a match and collect the group
-    const getGroup = (startX, startY, dx, dy) => {
-      const startTile = this.grid[startY][startX];
-      if (!startTile || visited.has(`${startX},${startY}`)) return [];
+    const collectRuns = (axis) => {
+      const isHorizontal = axis === 'h';
+      const primary = isHorizontal ? this.height : this.width;
+      const secondary = isHorizontal ? this.width : this.height;
 
-      const type = startTile.type;
-      const group = [{ x: startX, y: startY, tile: startTile }];
-      visited.add(`${startX},${startY}`);
+      for (let p = 0; p < primary; p++) {
+        let run = [];
+        for (let s = 0; s < secondary; s++) {
+          const x = isHorizontal ? s : p;
+          const y = isHorizontal ? p : s;
+          const tile = this.grid[y][x];
 
-      let length = 1;
-      // Check in positive direction
-      let cx = startX + dx, cy = startY + dy;
-      while (cy >= 0 && cy < this.height && cx >= 0 && cx < this.width) {
-        const tile = this.grid[cy][cx];
-        if (tile && tile.type === type) {
-          group.push({ x: cx, y: cy, tile: tile });
-          visited.add(`${cx},${cy}`);
-          length++;
-          cx += dx;
-          cy += dy;
-        } else {
-          break;
+          if (tile && (run.length === 0 || run[0].tile.type === tile.type)) {
+            run.push({ x, y, tile });
+          } else {
+            if (run.length >= 3) matches.push(run);
+            run = tile ? [{ x, y, tile }] : [];
+          }
         }
+        if (run.length >= 3) matches.push(run);
       }
-      // Check in negative direction
-      cx = startX - dx;
-      cy = startY - dy;
-      while (cy >= 0 && cy < this.height && cx >= 0 && cx < this.width) {
-        const tile = this.grid[cy][cx];
-        if (tile && tile.type === type) {
-          group.push({ x: cx, y: cy, tile: tile });
-          visited.add(`${cx},${cy}`);
-          length++;
-          cx -= dx;
-          cy -= dy;
-        } else {
-          break;
-        }
-      }
-      // Only return if we have at least 3 in a line
-      return length >= 3 ? group : [];
     };
 
-    // Horizontal groups
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        const group = getGroup(x, y, 1, 0);
-        if (group.length >= 3) {
-          matches.push(group);
-        }
-      }
-    }
-    // Vertical groups
-    for (let y = 0; y < this.height; y++) {
-      for (let x = 0; x < this.width; x++) {
-        const group = getGroup(x, y, 0, 1);
-        if (group.length >= 3) {
-          matches.push(group);
-        }
-      }
-    }
-
-    // Remove duplicate groups (same set of tiles) - simple approach: flatten and compare sets
-    // For simplicity, we'll just return all and let the caller handle duplicates if needed.
-    // In a real game, we might want to merge overlapping groups (like L or T shapes) for special tiles.
+    collectRuns('h');
+    collectRuns('v');
     return matches;
   }
 
@@ -157,8 +124,7 @@ export class Board {
     const matches = this.findMatches();
     const cleared = [];
     for (const group of matches) {
-      for (const { tile } of group) {
-        const { x, y } = tile;
+      for (const { x, y } of group) {
         if (this.grid[y][x]) {
           cleared.push(this.grid[y][x]);
           this.grid[y][x] = null;
@@ -186,12 +152,7 @@ export class Board {
       }
       // Fill the top with new tiles
       for (let y = 0; y <= writeY; y++) {
-        const types = ['apple', 'banana', 'cherry', 'grape', 'orange', 'pineapple'];
-        this.grid[y][x] = {
-          type: types[Math.floor(Math.random() * types.length)],
-          x,
-          y
-        };
+        this.grid[y][x] = { type: randomTileType(), x, y };
       }
     }
   }
