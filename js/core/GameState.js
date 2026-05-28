@@ -1,9 +1,17 @@
 export class GameState {
   constructor() {
     this.score = 0;
-    this.movesLeft = 30; // default for level 1
+    this.movesLeft = 20;
     this.level = 1;
-    this.targetScore = 1000; // example target
+    this.targetScore = 1000;
+    this.numTileTypes = 5;
+  }
+
+  initLevel(level) {
+    this.level = level;
+    this.score = 0;
+    this.movesLeft = 20;
+    this.targetScore = 300 + (level - 1) * 250;
   }
 
   addScore(amount) {
@@ -17,9 +25,14 @@ export class GameState {
   }
 
   reset() {
+    this.initLevel(1);
+  }
+
+  advanceLevel() {
+    this.level++;
     this.score = 0;
-    this.movesLeft = 30;
-    this.level = 1;
+    this.movesLeft = 20;
+    this.targetScore = 300 + (this.level - 1) * 250;
   }
 
   isLevelComplete() {

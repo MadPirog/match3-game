@@ -1,9 +1,10 @@
-import { TILE_COLORS } from '../core/tiles.js';
+import { SPECIAL_TEXTURES, TILE_COLORS, TILE_TEXTURES, TILE_TEXTURES_SPECIAL } from '../core/tiles.js';
 
 export class RenderSystem {
   constructor(board) {
     this.board = board;
     this.container = document.getElementById('game-container');
+    this.tileSize = 72;
     this.uiPanel = null;
     this.initUI();
   }
@@ -51,11 +52,36 @@ export class RenderSystem {
         // We'll set that once in initUI or here.
         if (y === 0) {
           // Only set column count once
-          this.boardContainer.style.gridTemplateColumns = `repeat(${this.board.width}, 60px)`;
+          this.boardContainer.style.gridTemplateColumns = `repeat(${this.board.width}, ${this.tileSize}px)`;
         }
 
-        // Set background color based on tile type (for now)
-        tileEl.style.backgroundColor = TILE_COLORS[tile.type] || '#808080';
+        // Set background image / color based on tile type и спец-направления
+        let texture = TILE_TEXTURES[tile.type];
+        if (tile.special === 'colorBomb') {
+          texture = SPECIAL_TEXTURES.colorBomb;
+        }
+        if (tile.special === 'lightningRow' || tile.special === 'lightningCol') {
+          const map = TILE_TEXTURES_SPECIAL[tile.special];
+          texture = map?.[tile.type] ?? texture;
+        }
+        if (texture) {
+          tileEl.style.backgroundImage = `url(${texture})`;
+          tileEl.style.backgroundColor = 'transparent';
+        } else {
+          tileEl.style.backgroundImage = 'none';
+          tileEl.style.backgroundColor = TILE_COLORS[tile.type] || '#808080';
+        }
+        tileEl.textContent = '';
+        tileEl.classList.remove('special-lightning', 'special-color-bomb');
+
+        const now = Date.now();
+        if (typeof tile.spawnedAt === 'number' && now - tile.spawnedAt < 180) {
+          tileEl.classList.add('tile-spawn');
+        }
+
+        if (tile.special === 'colorBomb') {
+          tileEl.classList.add('special-color-bomb');
+        }
 
         // Store coordinates for input handling
         tileEl.dataset.x = x;
