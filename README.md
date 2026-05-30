@@ -39,8 +39,7 @@ match3-game/
 
 ## How to Run
 1. Clone or download the repository
-2. Open `index.html` in a web browser
-3. Play the game!
+2. Run the provided batch file to start the game server
 
 ## Development
 This project uses vanilla JavaScript with ES6 modules. No build step is required for basic functionality.
